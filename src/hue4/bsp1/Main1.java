@@ -14,6 +14,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -26,35 +30,39 @@ public class Main1 {
 
     List<String> list = new ArrayList<>();
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
         Scanner scanner = new Scanner(System.in, "Windows-1252");
         System.out.println("Geben Sie einen Teiler ein: ");
         int teiler = Integer.parseInt(scanner.nextLine());
         System.out.println("In wie viele Unterteile soll die Liste aufgeteilt werden?");
-        int chunks = Integer.parseInt(scanner.nextLine());
+        int unterteile = Integer.parseInt(scanner.nextLine());
 
         Main1 main = new Main1();
         main.readFile();
-        //for (int i = 0; i < main.list.size(); i++) {
-        //  System.out.print(main.list.get(i) + " ");
-        //}
 
         System.out.println(main.list.size());
         System.out.println(main.toIntList().size());
+        System.out.println("--------------------------");
 
         List<Integer> list = main.toIntList();
-        List<Integer> teilbareNr = new ArrayList<>();
         Predicate<Integer> teilbar = i -> i % teiler == 0;
 
-        for (int i = 0; i < list.size(); i++) {
-            if (teilbar.test(list.get(i))) {
-                teilbareNr.add(list.get(i));
-            }
+        int length = list.size() / unterteile;
+        List<List<Integer>> unterteileList = chopped(list, length);
+
+        ExecutorService death;
+        death = Executors.newFixedThreadPool(unterteile);
+        for (List<Integer> unterteilteListe : unterteileList) {
+            death.execute(() -> {
+                for (int i = 0; i < unterteilteListe.size(); i++) {
+                    if (teilbar.test(unterteilteListe.get(i))) {
+                        System.out.println(unterteilteListe.get(i));
+                    }
+                }
+            });
         }
 
-        for (int i = 0; i < list.size(); i++) {
-            System.out.print(main.list.get(i) + " ");
-        }
+        death.awaitTermination(20, TimeUnit.SECONDS);
     }
 
     public void readFile() {
@@ -95,4 +103,14 @@ public class Main1 {
         return intList;
     }
 
+    static <T> List<List<T>> chopped(List<T> list, final int L) {
+        List<List<T>> parts = new ArrayList<List<T>>();
+        final int N = list.size();
+        for (int i = 0; i < N; i += L) {
+            parts.add(new ArrayList<T>(
+                    list.subList(i, Math.min(N, i + L)))
+            );
+        }
+        return parts;
+    }
 }
