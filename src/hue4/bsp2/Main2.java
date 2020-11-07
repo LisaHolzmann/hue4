@@ -5,6 +5,7 @@
  */
 package hue4.bsp2;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Scanner;
@@ -27,42 +28,55 @@ public class Main2 {
         Scanner scan = new Scanner(System.in, "Windows-1252");
         int n = 0;
         List<Integer> list = new LinkedList<Integer>();
-        final int teiler = 100;
+        final int length = 100;
 
         while (n == 0) {
             System.out.println("Geben Sie bitte eine Zahl n ein:");
 
-            n = Integer.parseInt(scan.nextLine()) + 1;
+            n = Integer.parseInt(scan.nextLine());
 
-            for (int i = 0; i < n; i++) {
+            for (int i = 0; i <= n; i++) {
                 list.add(i);
             };
         }
 
-        final int teilbereiche = list.size() / teiler;
+        final int teilbereiche = list.size() / length;
+        List<List<Integer>> unterteileList = chopped(list, length);
+
         ExecutorService exc = Executors.newCachedThreadPool();
-        List<Integer> sublist = new LinkedList<>();
+
         List<Runnable> tasks = new LinkedList<>();
-        int i;
-        for (i = 0; i < teilbereiche; i++) {
-            sublist = list.subList(i * teiler, i * teiler + teiler);
-            tasks.add(new Runnable(sublist));
-        }
-        int rest = list.size() - teiler * i;
-        sublist = list.subList(teiler * i, list.size());
-        tasks.add(new Runnable(sublist));
 
-        List<Future<Integer>> res = exc.invokeAll(tasks);
+        for (List<Integer> unterteilteList : unterteileList) {
+            tasks.add(new Runnable(unterteilteList));
+        }
+
+        //speichert ergebnisse in liste
+        List<Future<Integer>> results = exc.invokeAll(tasks);
         exc.shutdown();
-        List<Integer> ints = new LinkedList<Integer>();
-        for (Future<Integer> re : res) {
-            ints.add(re.get());
+
+        //speichert ergebnisse in List<Integer>
+        List<Integer> numbers = new LinkedList<Integer>();
+        for (Future<Integer> re : results) {
+            numbers.add(re.get());
         }
 
-        int result = ints.stream()
+        int result = numbers.stream()
                 .reduce(0, (a, b) -> a + b);
         System.out.println(result);
 
+    }
+
+    //erstellt Sublist
+    static <T> List<List<T>> chopped(List<T> list, int length) {
+        List<List<T>> parts = new ArrayList<List<T>>();
+
+        for (int i = 0; i < list.size(); i += length) {
+            parts.add(new ArrayList<T>(
+                    list.subList(i, Math.min(list.size(), i + length)))
+            );
+        }
+        return parts;
     }
 
 }

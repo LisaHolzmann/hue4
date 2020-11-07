@@ -50,10 +50,10 @@ public class Main1 {
         int length = list.size() / unterteile;
         List<List<Integer>> unterteileList = chopped(list, length);
 
-        ExecutorService death;
-        death = Executors.newFixedThreadPool(unterteile);
+        ExecutorService exec;
+        exec = Executors.newFixedThreadPool(unterteile);
         for (List<Integer> unterteilteListe : unterteileList) {
-            death.execute(() -> {
+            exec.execute(() -> {
                 for (int i = 0; i < unterteilteListe.size(); i++) {
                     if (teilbar.test(unterteilteListe.get(i))) {
                         System.out.println(unterteilteListe.get(i));
@@ -62,7 +62,7 @@ public class Main1 {
             });
         }
 
-        death.awaitTermination(20, TimeUnit.SECONDS);
+        exec.awaitTermination(20, TimeUnit.SECONDS);
     }
 
     public void readFile() {
